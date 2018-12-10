@@ -9,8 +9,10 @@ library(psych)
 library(tidyverse)
 library(lme4)
 library(edlf8360)
+library(sjPlot)
 
 setwd("C:\\Users\\mccar\\Desktop\\tracking")
+setwd("C:\\Users\\Andrew\\Desktop\\va_tracking-master")
 df<-read_csv("analytic_data.csv")
 
 # functions --------------------
@@ -24,10 +26,6 @@ paste_data <- function(header=TRUE,...) {
   require(tibble)
   x<-read.table("clipboard",sep="\t",header=header,stringsAsFactors=TRUE,...)
   as_tibble(x)
-}
-
-paste_data <- function (...) {
-  readr::read_tsv(clipboard(), ...)
 }
 
 
@@ -284,6 +282,34 @@ model15 <- df %>%
   lmer(metric~ 1 + d_index  + pct_frpl + log(`Total Enrollment`) + urban + mostly + (1 | `Division num`), data = .)
 model16 <- df %>% 
   lmer(metric~ 1 + d_index  + pct_frpl + log(`Total Enrollment`) + (1 | `Division num`), data = .)
+
+OLS_restricted<- lm(metric ~ d_index + pct_frpl + log(`Total Enrollment`), data = df)
+OLS_w_Urbanicity<- lm(metric ~ d_index + pct_frpl + log(`Total Enrollment`) + urban + mostly, data = df)
+LME_restricted<-df %>% 
+  rename(total_enrollment = `Total Enrollment`) %>% 
+  lmer(metric~ 1 + d_index  + pct_frpl + log(total_enrollment) + (1 | `Division num`), data = .)
+LME_w_Urbanicity<- df %>% 
+  lmer(metric~ 1 + d_index  + pct_frpl + log(`Total Enrollment`) + urban + mostly + (1 | `Division num`), data = .)
+FE_restricted <-df %>% 
+  rename(total_enrollment = `Total Enrollment`) %>% 
+  rename(divnum = `Division num`) %>% 
+  lm(metric ~ d_index + pct_frpl + log(total_enrollment) + factor(divnum), data = .)
+FE_with_Urbanicity<-df %>% 
+  rename(total_enrollment = `Total Enrollment`) %>% 
+  lm(metric ~ d_index + pct_frpl + log(total_enrollment) + urban + mostly + factor(`Division num`), data = .)
+
+tab_model(OLS_restricted, FE_restricted, LME_restricted)
+tab_model(OLS_w_Urbanicity, FE_with_Urbanicity, LME_w_Urbanicity)
+
+library(ggsci)
+
+plot_model(FE_restricted, type = "pred", terms = c("d_index", "divnum"), transform = "total_enrollment" ) + theme_textbook() + geom_point() 
+
+
+
+
+
+
 rockchalk::outreg(
   list(
     "OLS " = model6,
