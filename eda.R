@@ -2,7 +2,7 @@
 library(readxl)
 library(magrittr)
 library(ggthemes)
-# devtools::install_github("McCartneyAC/mccrr")
+# devtools::install_github("McCartneyAC/university")
 library(mccrr)
 library(extrafont)
 library(psych)
@@ -10,9 +10,9 @@ library(tidyverse)
 library(lme4)
 library(edlf8360)
 library(sjPlot)
-
+library(university)
 setwd("C:\\Users\\mccar\\Desktop\\tracking")
-setwd("C:\\Users\\Andrew\\Desktop\\va_tracking-master")
+# setwd("C:\\Users\\Andrew\\Desktop\\va_tracking-master")
 df<-read_csv("analytic_data.csv")
 
 # functions --------------------
@@ -37,7 +37,9 @@ df1<-read_xlsx("book2.xlsx")
 df2<-read_xlsx("book3.xlsx")
 df3<-read_xlsx("book4.xlsx")
 # pos<-read_xlsx("pos.xlsx")
-# pos<-paste_data()
+pos_breaks<-paste_data()
+pos_breaks
+
 pos<- read_csv("pos_clean.csv")
 pos %<>% 
   mutate(id = dist_id) %>% 
@@ -89,7 +91,19 @@ df <- df %>%
                       pct_black^2 - pct_nwopi^2 - pct_white^2 - pct_2more^2)) %>% 
   mutate(metric = sum/13)
 
+names(pos_breaks)
 
+pos_breaks <- pos_breaks %>% 
+  mutate(num_sci = (sci_earth + sci_bio + sci_chem)/3) %>% 
+  mutate(num_eng = (eng_9 + eng_10 + eng_11 +eng_12)/4) %>% 
+  mutate(num_math = (math_alg + math_alg2 +math_geo)/3) %>% 
+  mutate(num_hist = (hist_world1 + hist_world2 + hist_usva)/3) %>% 
+  select(ID.num, num_sci, num_eng, num_math, num_hist)%>% 
+  rename(id = ID.num)
+
+
+df <- df %>% 
+  left_join(pos_breaks, by = "id")
 
 # Dataset Complete ----------------
 df
@@ -362,3 +376,65 @@ rockchalk::outreg(
 # do this again with pmin 
 
 regress(pct_advanced ~ pmin*metric + pct_frpl + log(`Total Enrollment`))
+
+
+library(ggthemes)
+### ANOVA
+# is the difference in leveledness of subject significant?
+df %>% 
+  select(num_sci, num_eng, num_math, num_hist) %>% 
+  rename(Science = num_sci, 
+         English = num_eng, 
+         Math = num_math, 
+         History = num_hist) %>% 
+  reshape2::melt() %>% 
+  ggplot(aes(y = value, x = variable, color = variable)) +
+  # geom_violin() +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.25) +
+  scale_color_uva() +
+  theme_textbook() +
+  labs(
+    title = "Number of tracks on average by Subject",
+    y = "average tracks",
+    x = "subject", 
+    color = "subject"
+  ) 
+
+subj_model_1 <- df %>% 
+  select(id, num_sci, num_eng, num_math, num_hist) %>%
+  rename(Science = num_sci, 
+         English = num_eng, 
+         Math = num_math, 
+         History = num_hist) %>% 
+  reshape2::melt(id = "id") %>% 
+  lm(value~variable, data = .)
+anova(subj_model_1)
+stata_summary(subj_model_1)
+
+ df %>% 
+  select(id, num_sci, num_eng, num_math, num_hist) %>%
+  rename(Science = num_sci, 
+         English = num_eng, 
+         Math = num_math, 
+         History = num_hist) %>%  
+  reshape2::melt(id = "id") %>% 
+  reshape2::dcast(id ~ variable, mean )  
+?aov
+ library(nlme)
+ library(car)
+subj_model_2_data <- df %>% 
+  select(id, num_sci, num_eng, num_math, num_hist) %>%
+  rename(Science = num_sci, 
+         English = num_eng, 
+         Math = num_math, 
+         History = num_hist) %>% 
+  reshape2::melt(id = "id") 
+             
+summary(
+  aov(value ~ variable + Error(id/variable), data = subj_model_2_data)
+)
+subj_m2<-aov(value ~ variable + Error(id/variable), data = subj_model_2_data)
+df %>% 
+  select(id, num_sci, num_eng, num_math, num_hist) %>%
+  psych::describe()
