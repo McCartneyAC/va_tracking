@@ -2,7 +2,7 @@
 library(readxl)
 library(magrittr)
 library(ggthemes)
-# devtools::install_github("McCartneyAC/university")
+# devtools::install_github("McCartneyAC/mccrr")
 library(mccrr)
 library(extrafont)
 library(psych)
@@ -10,16 +10,17 @@ library(tidyverse)
 library(lme4)
 library(edlf8360)
 library(sjPlot)
-library(university)
-setwd("C:\\Users\\mccar\\Desktop\\tracking")
-# setwd("C:\\Users\\Andrew\\Desktop\\va_tracking-master")
-df<-read_csv("analytic_data.csv")
 
+setwd("C:\\Users\\mccar\\Desktop\\tracking")
+setwd("C:\\Users\\Andrew\\Desktop\\va_tracking-master")
+
+df<-read_csv("analytic_data.csv")
+clear()
 # functions --------------------
 # 
-
+uvapal <- c("#E57200","#232D4B", "#007681","#F2CD00","#692A7E", "#84BD00","#A5ACAF", "#5C7F92","#857363","#CAC0B6")
 theme_textbook <- function () {
-  theme_light() + theme(text = element_text(family = "Calibri"))
+  theme_light() + theme(text = element_text(family = "Times New Roman"))
 }
 
 paste_data <- function(header=TRUE,...) {
@@ -37,15 +38,13 @@ df1<-read_xlsx("book2.xlsx")
 df2<-read_xlsx("book3.xlsx")
 df3<-read_xlsx("book4.xlsx")
 # pos<-read_xlsx("pos.xlsx")
-pos_breaks<-paste_data()
-pos_breaks
-
-pos<- read_csv("pos_clean.csv")
+# pos<-paste_data()
+pos<- read_csv("pos_clean_3.csv")
 pos %<>% 
   mutate(id = dist_id) %>% 
   select(-dist_id) %>% 
   select(id, everything()) %>% 
-  select(id, sum, `Division num`) %>% 
+  select(id, SUM, `Division num`) %>% 
   print()
 
 
@@ -71,6 +70,7 @@ df <- df1 %>%
 df <- df %>% 
   left_join(pos, by = "id")
 
+df
 #gen dummies
 df <- df %>% 
   mutate(urban = if_else(urbanicity == "urban", 1, 0)) %>% 
@@ -89,21 +89,9 @@ df <- df %>%
   mutate(pct_2more = (`Two or more races`/ `Total Enrollment`)) %>% 
   mutate(d_index = (1 - pct_hisp^2 - pct_ai_na^2 - pct_asian^2 - 
                       pct_black^2 - pct_nwopi^2 - pct_white^2 - pct_2more^2)) %>% 
-  mutate(metric = sum/13)
-
-names(pos_breaks)
-
-pos_breaks <- pos_breaks %>% 
-  mutate(num_sci = (sci_earth + sci_bio + sci_chem)/3) %>% 
-  mutate(num_eng = (eng_9 + eng_10 + eng_11 +eng_12)/4) %>% 
-  mutate(num_math = (math_alg + math_alg2 +math_geo)/3) %>% 
-  mutate(num_hist = (hist_world1 + hist_world2 + hist_usva)/3) %>% 
-  select(ID.num, num_sci, num_eng, num_math, num_hist)%>% 
-  rename(id = ID.num)
+  mutate(metric = SUM/13)
 
 
-df <- df %>% 
-  left_join(pos_breaks, by = "id")
 
 # Dataset Complete ----------------
 df
@@ -230,12 +218,20 @@ hist(df$d_index)
 
 lm(metric ~ urban + mostly + pct_frpl + d_index + log(`Total Enrollment`), data = df) %>% 
   stata_summary()
+
 df %>% 
   lm(pct_adv ~ urban + mostly + pct_frpl + d_index + log(`Total Enrollment`), data = .) %>% 
   stata_summary()
+
 model5<-df %>% 
   lm(pct_adv~ pct_frpl + d_index + log(`Total Enrollment`), data = .)
 summary(model5)
+stata_summary(model5)
+
+  # OKay, we need to include and interpret model 5 because wtf. 
+  # Well. Model 5 with clustering when we do clustering below. 
+
+
 model6<- lm(metric ~ d_index + pct_frpl + log(`Total Enrollment`), data = df)
 model9<- lm(metric ~ d_index + pct_frpl + log(`Total Enrollment`) + urban + mostly, data = df)
 model7<- lm(metric ~ pct_frpl  + log(`Total Enrollment`), data = df)
@@ -243,19 +239,26 @@ summary(model6)
 sum(is.na(df$`Total Enrollment`))
 
 df %>% 
+  select(`Total Enrollment`, pct_frpl, metric) %>% 
+  View()
+
+names(df)
+df %>% 
   filter(!is.na(metric)) %>% 
   mutate(pts = fitted(model7, level = 0, asList = FALSE)) %>% 
   ggplot(aes(y = pts, x = d_index)) +
-  geom_point(color = "#E57200", alpha = 0.8, stroke = 0) +
-  # geom_text(alpha = 0.8, aes(label = Name.x)) + 
-  geom_smooth(color = "#232D4B") + 
+  geom_point(# aes(color = factor(`Division num`)),# 
+    color = "#E57200", alpha = 0.8, stroke = 0, size = 2) +
+  # geom_text(alpha = 0.8, aes(label = Name)) + 
+  geom_smooth(color = "#232D4B", method = "lm") + 
   labs(
     title = "Levels of Courses and Diversity", 
     subtitle = "Controlling for FRPL and log of enrollment",
-    x = "D - Index (Kelly & Price, 2011)",
-    y = "Model Predicted Course Levels"
+    x = "Diversity - Index (Kelly & Price, 2011)",
+    y = "Restricted Model Predicted Course Levels"
   ) + 
   theme_textbook()
+  
 
 model8<-lm(metric~d_index, data = df)
 mccrr::gg_added_var(partial = model8, extended = model7)
@@ -344,7 +347,7 @@ rockchalk::outreg(
     "Levels" = model12, 
     "Levels" = model13,
     "Levels" = model14
-    ), 
+  ), 
   type = "html")
 
 
@@ -373,12 +376,36 @@ rockchalk::outreg(
   type = "html")
 
 
+
+# Clustered Standard Errors Models:
+names(df)
+library(multiwayvcov)
+library(miceadds)
+dfclust<- df %>% 
+  rename(division = `Division num`) %>% 
+  rename(enrollment = `Total Enrollment`) %>% 
+  select(metric, d_index, pct_frpl, enrollment, division, urban, mostly, rural)
+dfclust  
+
+
+clust1<- lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment), 
+             cluster = factor(dfclust$division))
+summary(clust1)
+clust2<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment) 
+                   + urban + rural, 
+                   cluster = factor(dfclust$division))
+tab_model(clust1, clust2)
+
+
+
+
 # do this again with pmin 
 
 regress(pct_advanced ~ pmin*metric + pct_frpl + log(`Total Enrollment`))
 
 
 library(ggthemes)
+names(df)
 ### ANOVA
 # is the difference in leveledness of subject significant?
 df %>% 
@@ -412,7 +439,7 @@ subj_model_1 <- df %>%
 anova(subj_model_1)
 stata_summary(subj_model_1)
 
- df %>% 
+df %>% 
   select(id, num_sci, num_eng, num_math, num_hist) %>%
   rename(Science = num_sci, 
          English = num_eng, 
@@ -421,8 +448,8 @@ stata_summary(subj_model_1)
   reshape2::melt(id = "id") %>% 
   reshape2::dcast(id ~ variable, mean )  
 ?aov
- library(nlme)
- library(car)
+library(nlme)
+library(car)
 subj_model_2_data <- df %>% 
   select(id, num_sci, num_eng, num_math, num_hist) %>%
   rename(Science = num_sci, 
@@ -430,7 +457,7 @@ subj_model_2_data <- df %>%
          Math = num_math, 
          History = num_hist) %>% 
   reshape2::melt(id = "id") 
-             
+
 summary(
   aov(value ~ variable + Error(id/variable), data = subj_model_2_data)
 )
