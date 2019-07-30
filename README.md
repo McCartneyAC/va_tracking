@@ -5,4 +5,4 @@ school district level statistics to examine tracking and leveled-ness of courses
 
 
 
-![](https://github.com/McCartneyAC/va_tracking/blob/master/plot_c_names_no_points.png?raw=true)
+![](https://github.com/McCartneyAC/va_tracking/blob/master/data_vis/plot_c_names_no_points.png?raw=true?raw=true)
