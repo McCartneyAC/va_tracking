@@ -76,7 +76,7 @@ model2<-lm(log(gsrate) ~ d_index, data = nonzeros)
 summary(model2)
 # In this case, you DO have a significant predictor: 
 # it looks like ever 100% increase in d_index predicts
-# a change in govschool rate of ... shit I suck at interpreting
+# a change in govschool rate of ...  I suck at interpreting
 # log linears. 
 exp(-1.7516)
 # changes your govschool rate by about 0.17? I guess? not a big change. 
