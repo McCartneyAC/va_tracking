@@ -11,11 +11,11 @@ library(lme4)
 library(edlf8360)
 library(sjPlot)
 
-setwd("C:\\Users\\mccar\\Desktop\\tracking")
-setwd("C:\\Users\\Andrew\\Desktop\\va_tracking-master")
+# setwd("C:\\Users\\mccar\\Desktop\\tracking")
+setwd("C:\\Users\\Andrew\\Desktop\\Statistics and Data Analysis\\va_tracking-master\\data_files"); getwd()
 
 df<-read_csv("analytic_data.csv")
-clear()
+
 # functions --------------------
 # 
 uvapal <- c("#E57200","#232D4B", "#007681","#F2CD00","#692A7E", "#84BD00","#A5ACAF", "#5C7F92","#857363","#CAC0B6")
@@ -37,28 +37,31 @@ paste_data <- function(header=TRUE,...) {
 df1<-read_xlsx("book2.xlsx")
 df2<-read_xlsx("book3.xlsx")
 df3<-read_xlsx("book4.xlsx")
+spending<-read_xlsx("expenditure.xlsx") 
+spending <-spending %>% 
+  mutate(id = div_number) %>% 
+  select(-`School Division`, -div_number)
 # pos<-read_xlsx("pos.xlsx")
 # pos<-paste_data()
 pos<- read_csv("pos_clean_3.csv")
 pos %<>% 
   mutate(id = dist_id) %>% 
-  select(-dist_id) %>% 
-  select(id, everything()) %>% 
-  select(id, SUM, `Division num`) %>% 
+  dplyr::select(-dist_id) %>% 
+  dplyr::select(id, everything()) %>% 
+  dplyr::select(id, SUM, `Division num`) %>% 
   print()
-
 
 df1 %<>% 
   mutate(id = `dist id`) %>% 
-  select(-`dist id`)
+  dplyr::select(-`dist id`)
 
 df2 %<>% 
   mutate(id = `Div. No.`) %>% 
-  select(-`Div. No.`)
+  dplyr::select(-`Div. No.`)
 
 df3 %<>% 
   mutate(id = `division number`) %>% 
-  select(-`division number`)
+  dplyr::select(-`division number`)
 
 df <- df1 %>% 
   left_join(df2, by = "id") %>% 
@@ -69,8 +72,16 @@ df <- df1 %>%
 
 df <- df %>% 
   left_join(pos, by = "id")
-
+pos
 df
+spending
+
+
+df <- df %>% 
+  left_join(pos, by = "id")
+
+
+df %>% view()
 #gen dummies
 df <- df %>% 
   mutate(urban = if_else(urbanicity == "urban", 1, 0)) %>% 
@@ -130,7 +141,7 @@ stata_summary(model2)
 summary(model3)
 
 df %>% 
-  select(Name, metric) %>% 
+  dplyr::select(Name, metric) %>% 
   arrange(-metric)
 
 
@@ -239,7 +250,7 @@ summary(model6)
 sum(is.na(df$`Total Enrollment`))
 
 df %>% 
-  select(`Total Enrollment`, pct_frpl, metric) %>% 
+  dplyr::select(`Total Enrollment`, pct_frpl, metric) %>% 
   View()
 
 names(df)
@@ -247,9 +258,9 @@ df %>%
   filter(!is.na(metric)) %>% 
   mutate(pts = fitted(model7, level = 0, asList = FALSE)) %>% 
   ggplot(aes(y = pts, x = d_index)) +
-  geom_point(# aes(color = factor(`Division num`)),# 
-    color = "#E57200", alpha = 0.8, stroke = 0, size = 2) +
-  # geom_text(alpha = 0.8, aes(label = Name)) + 
+  # geom_point(# aes(color = factor(`Division num`)),# 
+  #  color = "#E57200", alpha = 0.8, stroke = 0, size = 2) +
+  geom_text(alpha = 0.8, aes(label = Name)) + 
   geom_smooth(color = "#232D4B", method = "lm") + 
   labs(
     title = "Levels of Courses and Diversity", 
@@ -262,7 +273,10 @@ df %>%
 
 model8<-lm(metric~d_index, data = df)
 mccrr::gg_added_var(partial = model8, extended = model7)
-rockchalk::outreg(model6, type = "html")
+rockchalk::outreg(list(
+  "electivity" = model6, 
+  "electivity" = model9
+), type = "html")
 model10<-df %>% 
   mutate(d_sq = d_index^2) %>%  
   lm(metric ~ d_index + d_sq + pct_frpl + log(`Total Enrollment`) + urban + mostly, data = .)
@@ -384,20 +398,32 @@ library(miceadds)
 dfclust<- df %>% 
   rename(division = `Division num`) %>% 
   rename(enrollment = `Total Enrollment`) %>% 
-  select(metric, d_index, pct_frpl, enrollment, division, urban, mostly, rural)
+  rename(pct_rural = `Census Percent Rural`) %>% 
+  dplyr::select(metric, d_index, pct_frpl, enrollment, division, urban, mostly, rural, pct_rural)
 dfclust  
 
 
 clust1<- lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment), 
-             cluster = factor(dfclust$division))
+             cluster = dfclust$division)
 summary(clust1)
 clust2<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment) 
                    + urban + rural, 
-                   cluster = factor(dfclust$division))
-tab_model(clust1, clust2)
+                   cluster = dfclust$division)
+clust3<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment) + pct_rural,
+                   cluster = dfclust$division) # Irrelevant.
+#tab_model(clust1, clust2)
+summary(clust2)
+summary(clust3)
+# fr*ck this I'm doing it by hand.
 
 
-
+rockchalk::outreg(
+  list(
+    "Electivity" = clust1,
+    "Electivity" = clust2
+  )
+)
+tab_model(model6, model9)
 
 # do this again with pmin 
 
@@ -406,30 +432,37 @@ regress(pct_advanced ~ pmin*metric + pct_frpl + log(`Total Enrollment`))
 
 library(ggthemes)
 names(df)
+library(university)
 ### ANOVA
 # is the difference in leveledness of subject significant?
-df %>% 
-  select(num_sci, num_eng, num_math, num_hist) %>% 
+pos<- read_csv("C:\\Users\\Andrew\\Desktop\\va_tracking-master\\data_files\\pos_clean_3.csv")
+
+pos %>% 
+  dplyr::select(num_sci, num_eng, num_math, num_hist) %>% 
   rename(Science = num_sci, 
          English = num_eng, 
          Math = num_math, 
          History = num_hist) %>% 
   reshape2::melt() %>% 
-  ggplot(aes(y = value, x = variable, color = variable)) +
+  ggplot(aes(y = value, x = variable)) +
   # geom_violin() +
   geom_boxplot() +
   geom_jitter(alpha = 0.25) +
-  scale_color_uva() +
+  # scale_color_uva() +
   theme_textbook() +
   labs(
-    title = "Number of tracks on average by Subject",
-    y = "average tracks",
-    x = "subject", 
-    color = "subject"
+    title = "Number of Tracks by Subject",
+    y = "Tracks",
+    x = "Subject", 
+    color = "Subject"
   ) 
+names(pos)
 
-subj_model_1 <- df %>% 
-  select(id, num_sci, num_eng, num_math, num_hist) %>%
+
+# this model is wrong. does not account for nesting. 
+subj_model_1 <- pos %>% 
+  rename(id = dist_id) %>% 
+  dplyr::select(id, num_sci, num_eng, num_math, num_hist) %>%
   rename(Science = num_sci, 
          English = num_eng, 
          Math = num_math, 
@@ -439,19 +472,21 @@ subj_model_1 <- df %>%
 anova(subj_model_1)
 stata_summary(subj_model_1)
 
-df %>% 
-  select(id, num_sci, num_eng, num_math, num_hist) %>%
+# this model is wrong. does not account for nesting. 
+pos %>% 
+  dplyr::select(id, num_sci, num_eng, num_math, num_hist) %>%
   rename(Science = num_sci, 
          English = num_eng, 
          Math = num_math, 
          History = num_hist) %>%  
   reshape2::melt(id = "id") %>% 
   reshape2::dcast(id ~ variable, mean )  
-?aov
+
 library(nlme)
 library(car)
-subj_model_2_data <- df %>% 
-  select(id, num_sci, num_eng, num_math, num_hist) %>%
+subj_model_2_data <- pos %>% 
+  rename(id = dist_id) %>%  
+  dplyr::select(id, num_sci, num_eng, num_math, num_hist) %>%
   rename(Science = num_sci, 
          English = num_eng, 
          Math = num_math, 
@@ -462,6 +497,22 @@ summary(
   aov(value ~ variable + Error(id/variable), data = subj_model_2_data)
 )
 subj_m2<-aov(value ~ variable + Error(id/variable), data = subj_model_2_data)
-df %>% 
-  select(id, num_sci, num_eng, num_math, num_hist) %>%
+summary(subj_m2)
+pos %>% 
+  dplyr::select(dist_id, num_sci, num_eng, num_math, num_hist) %>%
   psych::describe()
+
+
+
+# other things:
+df3 <- df%>% 
+  select(metric, d_index) %>% 
+  filter(metric !=0)
+df3 %>% 
+  describe()
+df %>% 
+  arrange(d_index) %>% 
+  select(d_index)
+df %>% 
+  filter(id == 23 | id == 75) %>%  #14
+  select(id, Name, metric, d_index)

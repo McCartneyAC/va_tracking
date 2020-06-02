@@ -92,20 +92,26 @@ df <- df %>%
   mutate(d_index = (1 - pct_hisp^2 - pct_ai_na^2 - pct_asian^2 - 
                       pct_black^2 - pct_nwopi^2 - pct_white^2 - pct_2more^2)) %>% 
   mutate(metric = SUM/13) %>% 
-  mutate(division_num = `Division num`)
+  mutate(division = `Division num`)
 
 names(df)
 
 
 # Dataset Complete ----------------
 df <- df %>% 
-  select(id, Name ,division_num,  
+  select(id, Name ,division,  
          d_index, metric, 
          urban, mostly, rural,
          Expenditure_per_pupil, census,  
          pct_frpl, pct_apib, 
          pct_adv, pct_hisp, pct_ai_na, pct_asian, 
-         pct_black, pct_nwopi, pct_white, pct_2more)
+         pct_black, pct_nwopi, pct_white, pct_2more, 
+         `Census Percent Rural`) %>% 
+  rename(pct_rural = `Census Percent Rural`) 
+
+
+
 df %>% 
   describe(fast = TRUE)
+
 write_excel_csv(df, "analytic_data.csv")
