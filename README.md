@@ -9,5 +9,6 @@ A third folder has data visualizations in no particular organization. A fourth f
 
 
 ANDREW TO DO: 
-  do an apples-to-apples comparison of d_index for the whole district to d_index for ADV studies (d_ADV?) 
+* do an apples-to-apples comparison of d_index for the whole district to d_index for ADV studies (d_ADV?) 
   like `d_adv ~ d_index + census + frpl` within the path analysis. 
+* poisson-like regression on AP clases ~ d_index + etc. (this isn't really ZIP but it feels ZIPpy) 
