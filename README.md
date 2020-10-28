@@ -33,6 +33,7 @@ for (i in 1:length(files)) {
   tmp <- read_csv(files[i])    
   tmp <- tmp %>%     
       filter(LEA_STATE_NAME == "VIRGINIA")    
+  tmp[ tmp == -9 ] <- NA
   write_csv(tmp, files[i])
 }
 ```
