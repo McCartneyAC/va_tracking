@@ -102,7 +102,9 @@ df <- df %>%
                       pct_black^2 - pct_nwopi^2 - pct_white^2 - pct_2more^2)) %>% 
   mutate(metric = SUM/13)
 
-
+calc_d_index<-function(data, grouping){
+  
+}
 
 # Dataset Complete ----------------
 df
@@ -125,8 +127,8 @@ df %>%
     color = "urbanicity",
     caption = "College Readiness courses are AP, IB, or Dual-Enrollment courses"
   ) + 
-  theme_textbook() + 
-  scale_color_manual(values = uvapal)
+  theme_light() + 
+  university::scale_color_uva()
 
 
 fonts()
@@ -177,16 +179,15 @@ print(nrow(df))
 
 
 df %>% 
-  ggplot(aes(y = pct_adv, x = pct_frpl, color = urbanicity)) +
+  ggplot(aes(y = pct_adv, x = d_index, color = pct_frpl)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(
-    title = "Percent of Students with Advanced Diplomas By Poverty and Urbanicity", 
-    x = "percent FRPL", 
+    title = "Percent of Students with Advanced Diplomas", 
+ 
     y = "Percent Advanced Studies Diploma"
-  ) +
-  theme_solarized() +
-  scale_color_solarized()
+  ) + 
+  theme_light()
 
 
 

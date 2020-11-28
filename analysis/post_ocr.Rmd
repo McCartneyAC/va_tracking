@@ -1,0 +1,103 @@
+---
+title: "post-OCR updates"
+author: "Andrew McCartney"
+date: "10/27/2020"
+output: 
+  html_document:
+    code_folding: hide
+    df_print: paged
+    fig_caption: yes
+    theme: journal
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE)
+
+library(ggplot2)
+library(readr)
+library(readxl)
+library(mccrr)
+library(dplyr)
+library(tibble)
+library(lubridate)
+library(reshape2)
+library(forcats)
+library(sjPlot)
+library(extrafont); loadfonts()
+library(ggsci)
+library(psych)
+library(MASS)
+library(car)
+library(lme4)
+library(edlf8360)
+library(gt)
+library(ggridges)
+library(gtsummary)
+use <- function(name) {
+  # consider future support for .json? 
+  if (grepl(".csv", name)) {
+    readr::read_csv(name)
+  } else if (grepl(".xlsx", name)) {
+    readxl::read_xlsx(name)
+  } else if (grepl(".dta", name)) {
+    haven::read_dta(name)
+  } else if (grepl( ".sav", name)) {
+    haven::read_spss(name)
+  } else if (grep1(".rda", name)) {
+    load(name)
+  } else {
+    stop("unknown data type.")
+  }
+}
+center <- function(df, var, center = 0) {
+  # centers a running variable on user input center
+  # first successful tidyeval function !!!
+  user_var <- enquo(var)
+  varname <- quo_name(user_var)
+  center <- enquo(center)
+  mutate(df, !!varname := (!!user_var-!!center))
+}
+
+# this is a function I wrote to fit in to `select_if`. You'll see it later. 
+is_extant <-function(x) any(!is.na(x))
+is_numeric<-function(x) any(is.numeric(x))
+```
+
+
+
+Hi Maggie!
+
+Andrew and I went through the OCR data for a while and are both really, really excited about it. The data looks great! We created a 2017 OCR data folder in Drive with links to the raw data for all of the districts, keys for understanding the spreadsheets and analyses for Andrew to start with. He is going to look at enrollment in chemistry, biology, algebra 1, algebra 2, advanced courses (AP/IB/DE), credit recovery (if we can, data looks sparse), and gifted and talented programs and compare enrollment in each to the diversity of the district. We can then add the findings from each to the existing paper to reinforce the findings in each section.
+
+ 
+
+In the section on state tracking, we would talk about the two diplomas and gifted and talented. Andrew is also going to check the data set for Governors’ schools—it looks as if Maggie Walker at least is in there. Andrew, the list of governors schools is here (https://en.wikipedia.org/wiki/Governor%27s_Schools_(Virginia)). We just need data on the racial composition of each—if we could look at it relative to districts that send kids there, that would be amazing, but just including the diversity would hugely strengthen that section.
+
+ 
+
+In the section on variation in types of courses offered, we will add in the findings on advanced and credit recovery programs.
+
+ 
+
+Variations in numbers of course levels would be expanded to include some of the content from the last draft on variations in number of levels across courses and across departments. We removed that data from this draft as it was less interesting but if we add in data on chemistry, bio, and algebra and who takes each, we get something worth reporting
+
+ 
+
+Variations in prerequisites would stay. However, it would then we our weakest section by far. I think we would possibly want to shrink it or think about something else that we could add. I can play with it a bit.
+
+ 
+
+Basically, we would be adding student data to each of our sections, which really answers the vast majority of our reviewers’ comments. I think that the OCR data should get us into a solid journal. We will have to see what is in the data to come up with an overarching argument. It might be that there is a tipping point for diversity after which we see increasing exclusionary practices—we will see what is in the data and if there is a relationship to trackedness or not.  Once we have the results, we can tweak our framing and discussion but overall, I think the new data will just strengthen our existing structure.
+
+ 
+
+The plan is that Maggie, you can redo the framing to make it leadership relevant—modifying the intro, lit review, and framing of the discussion and conclusion. I will work with Andrew on the methods (Adding in the new data set and analyses) and on revising the findings. Let’s set a goal of sending this out by February 1st—that gives Maggie time to work on her dissertation and the initial framing and us to redo analyses and rewrite. To get there we should aim to have a revised draft done by January 15th with all of the new components in. That would give us two weeks to revise and make it look good for the new journal.
+
+ 
+
+Let me know

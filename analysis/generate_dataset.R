@@ -106,12 +106,40 @@ df <- df %>%
          pct_frpl, pct_apib, 
          pct_adv, pct_hisp, pct_ai_na, pct_asian, 
          pct_black, pct_nwopi, pct_white, pct_2more, 
-         `Census Percent Rural`) %>% 
-  rename(pct_rural = `Census Percent Rural`) 
+         `Census Percent Rural`,
+         starts_with("n_ADV")) %>% 
+  rename(pct_rural = `Census Percent Rural`) %>% 
+  mutate(pct_nonwhite_adv = (1 - (`n_ADV White`/n_Advanced))*100)
 
 
+# 
+# df %>% 
+#   dplyr::select(-c(`n_ADV FRPL`, `n_ADV LEP`)) %>% 
+#   pivot_longer(
+#     cols = starts_with("n_ADV"), 
+#     names_to = "race_ethnicity",
+#     names_prefix = "n_ADV ",
+#     values_to = "count",
+#     values_drop_na = TRUE
+#   ) %>% 
+#   filter(race_ethnicity != "n_Advanced") %>% 
+#   ggplot(aes(y = race_ethnicity, 
+#              x = count,
+#              fill = race_ethnicity)) + 
+#   ggridges::geom_density_ridges() + 
+#   theme_light() + 
+#   scale_x_continuous() + 
+#   guides(fill = FALSE)
+
+
+# df %>% 
+#   select(Name, division, d_index, pct_nonwhite_adv) %>% 
+#   arrange(-pct_nonwhite_adv)
 
 df %>% 
   describe(fast = TRUE)
 
 write_excel_csv(df, "analytic_data.csv")
+
+
+names(df1)
