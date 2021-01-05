@@ -795,15 +795,17 @@ data_long <- full_data %>%
 
 write_csv(full_data, "ocr_merge_0104.csv")
 write_csv(data_long, "ocr_merge_0104_long.csv")
+setwd("C:\\Users\\Andrew\\Desktop\\Statistics and Data Analysis\\va_tracking-master\\data_files\\ocr_va\\")
 
+data_long<- read_csv("ocr_merge_0104_long.csv")
 
 # Joining LEAs and Analytic -----------------------------------------------
 
 
-leas <- full_data %>% 
-  select(LEA) %>% 
-  group_by(LEA) %>% 
-  count()
+# leas <- full_data %>% 
+#   select(LEA) %>% 
+#   group_by(LEA) %>% 
+#   count()
 #write_csv(leas, "leas.csv")     # SHUT THE DOOR AFTER YOU JESUS
                                  # were you born in a barn? 
 leas<-read_csv("leas.csv")
@@ -813,7 +815,7 @@ data_long <- data_long %>%
   left_join(leas, by ="LEA")  
 
 data_long <- data_long %>% 
-  select(School, id, everything(), -c(n.x,n.y))
+  select(School, id, everything())
 analytic_data <-read_csv("C:\\Users\\Andrew\\Desktop\\Statistics and Data Analysis\\va_tracking-master\\data_files\\analytic_data.csv")
 analytic_data
 data_long <- data_long %>% 
@@ -868,3 +870,12 @@ data_medium %>%
   ggplot(aes(x = discrepancy_black)) + 
   geom_histogram() +
   facet_wrap(~course)
+data_medium %>% 
+  group_by(School,SCHID, LEA) %>% 
+  count() %>% 
+  arrange(-n) 
+
+data_medium %>% 
+  filter(SCHID == "00204")
+## Getting two of everything in rockbrdige because the 
+## id 81 is duplicated in analytic_data.csv

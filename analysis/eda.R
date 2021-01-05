@@ -102,9 +102,6 @@ df <- df %>%
                       pct_black^2 - pct_nwopi^2 - pct_white^2 - pct_2more^2)) %>% 
   mutate(metric = SUM/13)
 
-calc_d_index<-function(data, grouping){
-  
-}
 
 # Dataset Complete ----------------
 df
@@ -132,7 +129,7 @@ df %>%
 
 
 fonts()
-
+df
 
 model1<-lm(AB_IB_Dual_Enrollment ~ census + mostly + urban, data = df)
 model2<-lm(AB_IB_Dual_Enrollment ~ log(census) + mostly + urban, data = df) #need log of census as offset variable? 
@@ -436,7 +433,7 @@ names(df)
 library(university)
 ### ANOVA
 # is the difference in leveledness of subject significant?
-pos<- read_csv("C:\\Users\\Andrew\\Desktop\\va_tracking-master\\data_files\\pos_clean_3.csv")
+pos<- read_csv("C:\\Users\\Andrew\\Desktop\\Statistics and Data Analysis\\va_tracking-master\\data_files\\pos_clean_3.csv")
 
 pos %>% 
   dplyr::select(num_sci, num_eng, num_math, num_hist) %>% 
@@ -498,12 +495,12 @@ summary(
   aov(value ~ variable + Error(id/variable), data = subj_model_2_data)
 )
 subj_m2<-aov(value ~ variable + Error(id/variable), data = subj_model_2_data)
-summary(subj_m2)
+report(subj_m2)
 pos %>% 
   dplyr::select(dist_id, num_sci, num_eng, num_math, num_hist) %>%
   psych::describe()
 
-
+library(report)
 
 # other things:
 df3 <- df%>% 
