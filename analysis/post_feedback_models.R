@@ -1,6 +1,21 @@
 library(multiwayvcov)
 library(miceadds)
-
+use <- function(name) {
+  # consider future support for .json? 
+  if (grepl(".csv", name)) {
+    readr::read_csv(name)
+  } else if (grepl(".xlsx", name)) {
+    readxl::read_xlsx(name)
+  } else if (grepl(".dta", name)) {
+    haven::read_dta(name)
+  } else if (grepl( ".sav", name)) {
+    haven::read_spss(name)
+  } else if (grep1(".rda", name)) {
+    load(name)
+  } else {
+    stop("unknown data type.")
+  }
+}
 
 df<-use("C:\\Users\\Andrew\\Desktop\\Statistics and Data Analysis\\va_tracking-master\\data_files\\analytic_data.csv")
 df
@@ -16,15 +31,15 @@ dfclust
 
 
 clust1<- lm.cluster(data = dfclust, 
-                    metric ~ d_index + pct_frpl + log(enrollment) + 
+                    metric ~ d_index + pct_frpl + log(census) + 
                       Expenditure_per_pupil ,
                     cluster = dfclust$division)
 summary(clust1)
 clust2<-lm.cluster(data = dfclust, 
-                   metric ~ d_index + pct_frpl + log(enrollment) +
+                   metric ~ d_index + pct_frpl + log(census) +
                      Expenditure_per_pupil + urban + rural, 
                    cluster = dfclust$division)
-clust3<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment) + 
+clust3<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(census) + 
                      Expenditure_per_pupil +  pct_rural,
                    cluster = dfclust$division) 
 # Irrelevant.
@@ -71,15 +86,15 @@ clust_null<- lm.cluster(data = dfclust,
 install.packages("estimatr")
 library(estimatr)  
 
-main_model<- lm_robust(metric ~ d_index + pct_frpl + log(enrollment) + 
+main_model<- lm_robust(metric ~ d_index + pct_frpl + log(census) + 
                       Expenditure_per_pupil ,
                     data = dfclust, 
                     clusters = division)
 summary(main_model)
-mod_s_expenditure<-lm_robust(metric ~ d_index + pct_frpl + log(enrollment),
+mod_s_expenditure<-lm_robust(metric ~ d_index + pct_frpl + log(census),
                              data = dfclust, 
                              clusters = division)
-exp_c_urbanicity <- lm_robust(metric ~ d_index + pct_frpl + log(enrollment) + 
+exp_c_urbanicity <- lm_robust(metric ~ d_index + pct_frpl + log(census) + 
                                 Expenditure_per_pupil:pct_rural ,
                               data = dfclust, 
                               clusters = division)
@@ -94,7 +109,7 @@ tab_model(main_model, mod_s_expenditure, model_3, exp_c_urbanicity
 
 
 
-model_3<- lm_robust(metric ~ d_index  + log(enrollment) + 
+model_3<- lm_robust(metric ~ d_index  + log(census) + 
                         Expenditure_per_pupil ,
                       data = dfclust, 
                       clusters = division)
@@ -108,13 +123,13 @@ tab_model(div_exp, met_exp)
 # MAIN GRAPHIC OUTPUT (no clustering)
 df %>% 
   filter(!is.na(metric)) %>%
-  filter(!is.na(enrollment)) %>% 
+  filter(!is.na(census)) %>% 
   mutate(pts = fitted(restricted_main, level = 0, asList = FALSE)) %>% 
   ggplot(aes(y = pts, x = d_index)) +
   # geom_point(# aes(color = factor(`Division num`)),# 
   #  color = "#E57200", alpha = 0.8, stroke = 0, size = 2) +
   geom_text(alpha = 0.8, aes(label = Name)) + 
-  geom_smooth(color = "#232D4B", method = "lm") + 
+  geom_smooth(color = "#232D4B", method = "lm_robust") + 
   labs(
     title = "Levels of Courses and Diversity", 
     subtitle = "Controlling for FRPL, enrollment, and expenditure",
@@ -149,57 +164,19 @@ df %>%
 
 
 
-library(viridis)
-library(tidyverse)
-library(cowplot)     # for theme_map()
-library(colorspace)  # for scale_fill_continuous_sequential()
-library(sf)       
-getwd()
-shapes<-sf::st_read(system.file("C://Users//Andrew//Desktop//Statistics and Data Analysis//va_tracking-master//data_files//", package = "sf"))
-va <- sf::st_read(system.file("shape/tl_2016_51_cousub.shp", package = "sf"), quiet = TRUE)
 
-va <- sf::st_read(
-"C://Users//Andrew//Desktop//Statistics and Data Analysis//va_tracking-master//data_files//admin_shapefiles//VirginiaCounty.shp")
-plot(va)
+# PUblishing These Models God Damn ----------------------------------------
+
+
+main_model<- lm_robust(metric ~ d_index + pct_frpl + log10(census), data = dfclust, 
+                       clusters = factor(division))
+
+main_with_urban<-lm_robust(metric ~ d_index + pct_frpl + log10(census) + pct_rural,
+                             data = dfclust, 
+                             clusters = division)
+
+
+tab_model(main_model, show.se = TRUE)
+#WHAT THE FUCK
+
 df
-head(va)
-va <- va %>% 
-  mutate(Name = NAMELSAD )
-va <- va %>% 
-  left_join(df, by = "Name")
-va
-
-# GO TO EXCEL. FIND AND REPLACE city WITH City 
-ggplot(va, aes(fill = d_index )) + 
-  geom_sf(color = "white") +
-  scale_fill_continuous_sequential(
-    palette = "Blues", rev = TRUE,
-    na.value = "grey60",
-    name = "D-Index (Kelly, 1999)",
-    #limits = c(9000, 21000),
-   # breaks = 3000*c(1:5),
-   # labels = c("$9,000", "$12,000", "$15,000", "$18,000", "$21,000")
-    guide = guide_colorbar(
-      direction = "horizontal",
-      label.position = "bottom",
-      title.position = "top",
-      barwidth = grid::unit(3.0, "in"),
-      barheight = grid::unit(0.2, "in")
-    )
-  ) + 
-  theme_map(12) +
-  theme(
-    legend.title.align = 0.5,
-    legend.text.align = 0.5,
-    legend.justification = c(0, 0),
-    legend.position = c(0.02, 0.8)
-  )
-
-
-
-
-df %>% 
-  mccrr::dossier(Name, "Fairfax County")
-df %>% 
-  arrange(-d_index) %>% 
-  dplyr::select(Name, d_index)

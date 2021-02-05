@@ -11,6 +11,14 @@ library(lme4)
 library(edlf8360)
 library(sjPlot)
 
+library(multiwayvcov)
+library(miceadds)
+library(ggthemes)
+
+library(university)
+library(nlme)
+library(car)
+library(report)
 # setwd("C:\\Users\\mccar\\Desktop\\tracking")
 setwd("C:\\Users\\Andrew\\Desktop\\Statistics and Data Analysis\\va_tracking-master\\data_files"); getwd()
 
@@ -34,80 +42,80 @@ paste_data <- function(header=TRUE,...) {
 # else
 # 
 # clean data ----------------------
-df1<-read_xlsx("book2.xlsx")
-df2<-read_xlsx("book3.xlsx")
-df3<-read_xlsx("book4.xlsx")
-spending<-read_xlsx("expenditure.xlsx") 
-spending <-spending %>% 
-  mutate(id = div_number) %>% 
-  select(-`School Division`, -div_number)
-# pos<-read_xlsx("pos.xlsx")
-# pos<-paste_data()
-pos<- read_csv("pos_clean_3.csv")
-pos %<>% 
-  mutate(id = dist_id) %>% 
-  dplyr::select(-dist_id) %>% 
-  dplyr::select(id, everything()) %>% 
-  dplyr::select(id, SUM, `Division num`) %>% 
-  print()
-
-df1 %<>% 
-  mutate(id = `dist id`) %>% 
-  dplyr::select(-`dist id`)
-
-df2 %<>% 
-  mutate(id = `Div. No.`) %>% 
-  dplyr::select(-`Div. No.`)
-
-df3 %<>% 
-  mutate(id = `division number`) %>% 
-  dplyr::select(-`division number`)
-
-df <- df1 %>% 
-  left_join(df2, by = "id") %>% 
-  left_join(df3, by = "id") %>% 
-  select(id, everything()) %>% 
-  arrange(id) %>% 
-  mutate(census = `Census Total`)
-
-df <- df %>% 
-  left_join(pos, by = "id")
-pos
-df
-spending
-
-
-df <- df %>% 
-  left_join(pos, by = "id")
-
-
-df %>% view()
-#gen dummies
-df <- df %>% 
-  mutate(urban = if_else(urbanicity == "urban", 1, 0)) %>% 
-  mutate(mostly = if_else(urbanicity == "mostly_rural", 1, 0)) %>% 
-  mutate(rural = if_else(urbanicity == "rural", 1, 0)) %>% 
-  mutate(pct_frpl = (`Total FRPL` / `Total Enrollment`)) %>% 
-  mutate(pct_apib = (AB_IB_Dual_Enrollment / `Total Enrollment`)) %>% 
-  mutate(pct_adv = `n_Advanced`/(`n_Advanced` + `n_ Standard Diploma` + 
-                                   `n_Drop out` + GED + `n_ Applied`)) %>% 
-  mutate(pct_hisp  = (Hispanic_any / `Total Enrollment`)) %>% 
-  mutate(pct_ai_na = (AI_NA / `Total Enrollment`)) %>% 
-  mutate(pct_asian = (Asian / `Total Enrollment`)) %>% 
-  mutate(pct_black = (Black_or_AA / `Total Enrollment`)) %>% 
-  mutate(pct_nwopi = (NW_OPI / `Total Enrollment`)) %>% 
-  mutate(pct_white = (White / `Total Enrollment`)) %>% 
-  mutate(pct_2more = (`Two or more races`/ `Total Enrollment`)) %>% 
-  mutate(d_index = (1 - pct_hisp^2 - pct_ai_na^2 - pct_asian^2 - 
-                      pct_black^2 - pct_nwopi^2 - pct_white^2 - pct_2more^2)) %>% 
-  mutate(metric = SUM/13)
-
-
-# Dataset Complete ----------------
-df
-df %>% 
-  describe()
-write_excel_csv(df, "analytic_data.csv")
+# df1<-read_xlsx("book2.xlsx")
+# df2<-read_xlsx("book3.xlsx")
+# df3<-read_xlsx("book4.xlsx")
+# spending<-read_xlsx("expenditure.xlsx") 
+# spending <-spending %>% 
+#   mutate(id = div_number) %>% 
+#   select(-`School Division`, -div_number)
+# # pos<-read_xlsx("pos.xlsx")
+# # pos<-paste_data()
+# pos<- read_csv("pos_clean_3.csv")
+# pos %<>% 
+#   mutate(id = dist_id) %>% 
+#   dplyr::select(-dist_id) %>% 
+#   dplyr::select(id, everything()) %>% 
+#   dplyr::select(id, SUM, `Division num`) %>% 
+#   print()
+# 
+# df1 %<>% 
+#   mutate(id = `dist id`) %>% 
+#   dplyr::select(-`dist id`)
+# 
+# df2 %<>% 
+#   mutate(id = `Div. No.`) %>% 
+#   dplyr::select(-`Div. No.`)
+# 
+# df3 %<>% 
+#   mutate(id = `division number`) %>% 
+#   dplyr::select(-`division number`)
+# 
+# df <- df1 %>% 
+#   left_join(df2, by = "id") %>% 
+#   left_join(df3, by = "id") %>% 
+#   select(id, everything()) %>% 
+#   arrange(id) %>% 
+#   mutate(census = `Census Total`)
+# 
+# df <- df %>% 
+#   left_join(pos, by = "id")
+# pos
+# df
+# spending
+# 
+# 
+# df <- df %>% 
+#   left_join(pos, by = "id")
+# 
+# 
+# df %>% view()
+# #gen dummies
+# df <- df %>% 
+#   mutate(urban = if_else(urbanicity == "urban", 1, 0)) %>% 
+#   mutate(mostly = if_else(urbanicity == "mostly_rural", 1, 0)) %>% 
+#   mutate(rural = if_else(urbanicity == "rural", 1, 0)) %>% 
+#   mutate(pct_frpl = (`Total FRPL` / `Total Enrollment`)) %>% 
+#   mutate(pct_apib = (AB_IB_Dual_Enrollment / `Total Enrollment`)) %>% 
+#   mutate(pct_adv = `n_Advanced`/(`n_Advanced` + `n_ Standard Diploma` + 
+#                                    `n_Drop out` + GED + `n_ Applied`)) %>% 
+#   mutate(pct_hisp  = (Hispanic_any / `Total Enrollment`)) %>% 
+#   mutate(pct_ai_na = (AI_NA / `Total Enrollment`)) %>% 
+#   mutate(pct_asian = (Asian / `Total Enrollment`)) %>% 
+#   mutate(pct_black = (Black_or_AA / `Total Enrollment`)) %>% 
+#   mutate(pct_nwopi = (NW_OPI / `Total Enrollment`)) %>% 
+#   mutate(pct_white = (White / `Total Enrollment`)) %>% 
+#   mutate(pct_2more = (`Two or more races`/ `Total Enrollment`)) %>% 
+#   mutate(d_index = (1 - pct_hisp^2 - pct_ai_na^2 - pct_asian^2 - 
+#                       pct_black^2 - pct_nwopi^2 - pct_white^2 - pct_2more^2)) %>% 
+#   mutate(metric = SUM/13)
+# 
+# 
+# # Dataset Complete ----------------
+# df
+# df %>% 
+#   describe()
+# write_excel_csv(df, "analytic_data.csv")
 
 # Begin Plots for EDA ----------------------------
 
@@ -391,23 +399,21 @@ rockchalk::outreg(
 
 # Clustered Standard Errors Models:
 names(df)
-library(multiwayvcov)
-library(miceadds)
+
 dfclust<- df %>% 
-  rename(division = `Division num`) %>% 
-  rename(enrollment = `Total Enrollment`) %>% 
-  rename(pct_rural = `Census Percent Rural`) %>% 
-  dplyr::select(metric, d_index, pct_frpl, enrollment, division, urban, mostly, rural, pct_rural)
-dfclust  
+  #rename(division = `Division num`) %>%   rename(enrollment = `Total Enrollment`) %>% 
+  #rename(pct_rural = `Census Percent Rural`) %>% 
+  dplyr::select(metric, d_index, pct_frpl, census, division, urban, mostly, rural, pct_rural)
+  
 
 
-clust1<- lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment), 
+clust1<- lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(census), 
              cluster = dfclust$division)
 summary(clust1)
-clust2<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment) 
+clust2<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(census) 
                    + urban + rural, 
                    cluster = dfclust$division)
-clust3<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(enrollment) + pct_rural,
+clust3<-lm.cluster(data = dfclust, metric ~ d_index + pct_frpl + log(census) + pct_rural,
                    cluster = dfclust$division) # Irrelevant.
 #tab_model(clust1, clust2)
 summary(clust2)
@@ -427,10 +433,6 @@ tab_model(model6, model9)
 
 regress(pct_advanced ~ pmin*metric + pct_frpl + log(`Total Enrollment`))
 
-
-library(ggthemes)
-names(df)
-library(university)
 ### ANOVA
 # is the difference in leveledness of subject significant?
 pos<- read_csv("C:\\Users\\Andrew\\Desktop\\Statistics and Data Analysis\\va_tracking-master\\data_files\\pos_clean_3.csv")
@@ -480,8 +482,9 @@ pos %>%
   reshape2::melt(id = "id") %>% 
   reshape2::dcast(id ~ variable, mean )  
 
-library(nlme)
-library(car)
+
+
+
 subj_model_2_data <- pos %>% 
   rename(id = dist_id) %>%  
   dplyr::select(id, num_sci, num_eng, num_math, num_hist) %>%
