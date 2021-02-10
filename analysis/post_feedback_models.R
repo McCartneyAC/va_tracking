@@ -165,7 +165,7 @@ df %>%
 
 
 
-# PUblishing These Models God Damn ----------------------------------------
+# PUblishing These Models ----------------------------------------
 
 
 main_model<- lm_robust(metric ~ d_index + pct_frpl + log10(census), data = dfclust, 
@@ -177,6 +177,6 @@ main_with_urban<-lm_robust(metric ~ d_index + pct_frpl + log10(census) + pct_rur
 
 
 tab_model(main_model, show.se = TRUE)
-#WHAT THE FUCK
+#WHAT THE 
 
 df
