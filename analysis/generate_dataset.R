@@ -70,6 +70,8 @@ df <- df1 %>%
   arrange(id) %>% 
   mutate(census = `Census Total`)
 
+
+
 df <- df %>% 
   left_join(pos, by = "id")
 
