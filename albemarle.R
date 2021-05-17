@@ -75,4 +75,9 @@ EI<-function(x,y){
 albemarle
 RCDI(albemarle$gifted, albemarle$division)
 EI(albemarle$gifted, albemarle$division)
-© 2021 GitHub, Inc.
+
+
+
+
+
+class_RCDI ~ bottleneck1 + bottle2 + bottle3 +bottle4 + cov1 + cov2 + cov3 +cov4 +(ID | 1 + cov1district + cov2district + cov3district), data = .) 
