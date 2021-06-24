@@ -128,9 +128,9 @@ enrollment <- enrollment %>%
 
 ## Total School Enrollment -------------------------------------------------
 
+enrollment
 
-
-enroll_clean <- enrollment %>% 
+enroll_clean<-enrollment %>% 
   select(SCH_NAME, LEA_STATE,LEA_STATE_NAME,LEAID,LEA_NAME,SCHID,SCH_NAME,COMBOKEY, JJ,
          contains("SCH_ENR_")) %>% 
   ocr_clean() %>% 
@@ -139,9 +139,9 @@ enroll_clean <- enrollment %>%
   filter(!is.na(characteristic)) %>% 
   group_by(LEA ,SCHID, School, characteristic) %>% 
   tally(count) %>% 
-  ungroup() %>% 
-  group_by(School) %>% 
-  mutate(schoolsum = sum(n)) %>% 
+  ungroup() %>%
+  group_by(SCHID) %>% 
+  mutate(schoolsum = sum(n)) %>%  
   mutate(pct = n/schoolsum) %>% 
   pivot_wider(id_cols = c(LEA, SCHID, School, schoolsum),
               names_from = characteristic, 
@@ -263,7 +263,7 @@ bio_clean <- biology %>%
   group_by(LEA ,School, SCHID, characteristic) %>% 
   tally(count) %>% 
   ungroup() %>% 
-  group_by(School) %>% 
+  group_by(SCHID) %>% 
   mutate(schoolsum = sum(n)) %>% 
   mutate(pct = n/schoolsum) %>% 
   pivot_wider(id_cols = c(LEA, School, schoolsum, SCHID),
@@ -326,7 +326,7 @@ alg2_clean <- algebra2 %>%
   group_by(LEA ,SCHID, School, characteristic) %>% 
   tally(count) %>% 
   ungroup() %>% 
-  group_by(School) %>% 
+  group_by(SCHID) %>%  
   mutate(schoolsum = sum(n)) %>% 
   mutate(pct = n/schoolsum) %>% 
   pivot_wider(id_cols = c(LEA, SCHID, School, schoolsum),
@@ -377,6 +377,7 @@ alg2_clean <- algebra2 %>%
 
 
 ## AP Class Clean ----------------------------------------------------------
+apclass_clean
 
 apclass_clean <- ap %>% 
   select(SCH_NAME, LEA_STATE,LEA_STATE_NAME,LEAID,LEA_NAME,SCHID,SCH_NAME,COMBOKEY, JJ,
@@ -402,7 +403,7 @@ apclass_clean <- ap %>%
   group_by(LEA ,SCHID, School, characteristic) %>% 
   tally(count) %>% 
   ungroup() %>% 
-  group_by(School) %>% 
+  group_by(SCHID) %>% 
   mutate(schoolsum = sum(n)) %>% 
   mutate(pct = n/schoolsum) %>% 
   pivot_wider(id_cols = c(LEA, SCHID, School, schoolsum),
@@ -465,7 +466,7 @@ gate_clean<-gate %>%
   group_by(LEA, SCHID,School, characteristic) %>% 
   tally(count) %>% 
   ungroup() %>% 
-  group_by(School) %>% 
+  group_by(SCHID) %>% 
   mutate(schoolsum = sum(n)) %>% 
   mutate(pct = n/schoolsum) %>% 
   pivot_wider(id_cols = c(LEA, SCHID, School, schoolsum),
@@ -548,7 +549,7 @@ alg1_08_clean <-   algebra1 %>%
   group_by(LEA , SCHID, School, characteristic) %>% 
   tally(count) %>% 
   ungroup() %>% 
-  group_by(School) %>% 
+  group_by(SCHID) %>% 
   mutate(schoolsum = sum(n)) %>% 
   mutate(pct = n/schoolsum) %>% 
   pivot_wider(id_cols = c(LEA, SCHID,  School, schoolsum),
@@ -632,13 +633,22 @@ alg1_09_10_clean <-   algebra1 %>%
   group_by(LEA , SCHID, School, characteristic) %>% 
   tally(count) %>% 
   ungroup() %>% 
-  group_by(School) %>% 
+  group_by(SCHID) %>% 
   mutate(schoolsum = sum(n)) %>% 
   mutate(pct = n/schoolsum) %>% 
   pivot_wider(id_cols = c(LEA, SCHID,  School, schoolsum),
               names_from = characteristic, 
               values_from = pct) %>% 
   mutate(pctwhite = White / sum(
+    `Am Indian / Alaska Nat`,
+    Asian,
+    Black, 
+    Hispanic,
+    `Nat Hawaiian / PI`,
+    `Two or More Races`, 
+    White
+  )) %>% 
+  mutate(pctlatinx = Hispanic / sum(
     `Am Indian / Alaska Nat`,
     Asian,
     Black, 
@@ -666,10 +676,11 @@ alg1_09_10_clean <-   algebra1 %>%
             - White^2
            )) %>% 
   ungroup() %>% 
-  dplyr::select(School, SCHID, LEA, dindex_alg1, pctwhite, pctblack, schoolsum)  %>% 
+  dplyr::select(School, SCHID, LEA, dindex_alg1,pctlatinx, pctwhite, pctblack, schoolsum)  %>% 
   rename(schoolsum_alg10910 = schoolsum,
          pctwhite_alg10910 = pctwhite, 
          pctblack_alg10910 = pctblack, 
+         pctlatinx_alg10910 = pctlatinx, 
          dindex_alg10910    = dindex_alg1 )
 
 
@@ -719,13 +730,22 @@ alg1_11_12_clean <-   algebra1 %>%
   group_by(LEA , SCHID, School, characteristic) %>% 
   tally(count) %>% 
   ungroup() %>% 
-  group_by(School) %>% 
+  group_by(SCHID) %>% 
   mutate(schoolsum = sum(n)) %>% 
   mutate(pct = n/schoolsum) %>% 
   pivot_wider(id_cols = c(LEA, SCHID,  School, schoolsum),
               names_from = characteristic, 
               values_from = pct) %>% 
   mutate(pctwhite = White / sum(
+    `Am Indian / Alaska Nat`,
+    Asian,
+    Black, 
+    Hispanic,
+    `Nat Hawaiian / PI`,
+    `Two or More Races`, 
+    White
+  )) %>% 
+  mutate(pctlatinx = Hispanic / sum(
     `Am Indian / Alaska Nat`,
     Asian,
     Black, 
@@ -793,11 +813,11 @@ data_long <- full_data %>%
      values_drop_na = TRUE
    ) 
 
-write_csv(full_data, "ocr_merge_0104.csv")
-write_csv(data_long, "ocr_merge_0104_long.csv")
+write_csv(full_data, "ocr_merge_06232021.csv")
+write_csv(data_long, "ocr_merge_06232021_long.csv")
 setwd("C:\\Users\\Andrew\\Desktop\\Statistics and Data Analysis\\va_tracking-master\\data_files\\ocr_va\\")
 
-data_long<- read_csv("ocr_merge_0104_long.csv")
+data_long<- read_csv("ocr_merge_06232021_long.csv")
 
 # Joining LEAs and Analytic -----------------------------------------------
 
@@ -823,7 +843,7 @@ data_long <- data_long %>%
 
 
 data_long
-write_csv(data_long, "ocr_with_analytic.csv")
+write_csv(data_long, "ocr_with_analytic_06232021.csv")
 
 
 
@@ -831,7 +851,7 @@ write_csv(data_long, "ocr_with_analytic.csv")
 
 data_long <- data_long %>% 
   rename(trackedness = metric) %>% 
-  mutate(course = if_else(class == "enr", "aall_enrolled", class)) %>% 
+  mutate(course = if_else(class == "enr", "all_enrolled", class)) %>% 
   dplyr::select(School, id, course, trackedness,  dindex, pctblack, pctlatinx, everything())
 
 
@@ -841,19 +861,20 @@ data_medium <- data_long %>%
          urban, mostly, rural, Expenditure_per_pupil, census, pct_frpl)
 
 school_pcts <- data_medium %>% 
-  filter(course == "aall_enrolled") %>% 
-  dplyr::select(School, SCHID, pctblack, pctlatinx, pctwhite, schoolsum) %>% 
+  filter(course == "all_enrolled") %>% 
+  dplyr::select(School, SCHID, pctblack, pctlatinx, pctwhite, schoolsum,dindex) %>% 
   rename(
     schpctblack = pctblack, 
     schpctlatinx = pctlatinx, 
     schpctwhite = pctwhite,
-    schpop = schoolsum
+    schpop = schoolsum, 
+    sch_dindex = dindex
   )
 
 
 
 data_medium <- data_medium %>% 
-  filter(course != "aall_enrolled")
+  filter(course != "all_enrolled")
 
 data_medium %>% 
   left_join(school_pcts) %>% 
@@ -863,7 +884,7 @@ data_medium %>%
   mutate(discrepancy_black = (pctblack - schpctblack),
          discrepancy_latinx = (pctlatinx -schpctlatinx)) ->data_medium
 
-write_csv(data_medium, "data_medium.csv")
+write_csv(data_medium, "data_medium_06232021.csv")
 
 # check that it worked: 
 data_medium %>% 
@@ -879,3 +900,62 @@ data_medium %>%
   filter(SCHID == "00204")
 ## Getting two of everything in rockbrdige because the 
 ## id 81 is duplicated in analytic_data.csv
+
+
+
+# using logs? -------------------------------------------------------------
+
+data_medium %>% 
+  select(School, SCHID, id, LEA, census, schpop) %>% 
+  distinct() %>% 
+ # mutate(logpop = log10(schpop+1)) %>% 
+ # pivot_longer(cols = c(schpop, logpop)) 
+  ggplot(aes(x = schpop) ) +
+  geom_density(fill="red") -> p1
+
+
+data_medium %>% 
+  select(School, SCHID, id, LEA, census, schpop) %>% 
+  distinct() %>% 
+  mutate(logpop = log10(schpop+1)) %>% 
+  ggplot(aes(x = logpop)  ) +
+  geom_density(fill="blue") -> p2
+
+p1 + p2
+
+
+
+data_medium %>% 
+  select(id, LEA, census) %>% 
+  distinct() %>% 
+  ggplot(aes(x = census) ) +
+  geom_density(fill="purple") -> p3
+
+data_medium %>% 
+  select(id, LEA, census) %>% 
+  distinct() %>% 
+  mutate(logcensus = log10(census+1)) %>% 
+  ggplot(aes(x = logcensus)  ) +
+  geom_density(fill="green") -> p4
+
+p3+p4
+
+
+# YES WE ARE GOING WITH LOGARITHMS
+
+
+
+# Intra-Cluster Correlations ----------------------------------------------
+
+data_medium
+ 
+
+# ap class calcs ----------------------------------------------------------
+
+ap_count <- ap %>% 
+  filter(!is.na(SCH_APCOURSES)) %>% 
+  select(LEA_NAME, SCHID, SCH_NAME, SCH_APCOURSES) 
+
+write_csv(ap_count, file = "ap_count.csv")
+read_csv("ap_count.csv")
+jiki
